@@ -5,8 +5,8 @@ services:
     networks:
       - my_network
     ports:
-      - "9000:9000"
-      - "9090:9090"
+      - "9003:9000"
+      - "9093:9090"
     volumes:
       - ./mount/minio/data:/data
       - ./mount/minio-config:/root/.minio
@@ -18,7 +18,7 @@ services:
     container_name: postgres
     image: postgres:14.2-alpine
     ports:
-      - 5432:5432
+      - 5435:5432
     environment:
       POSTGRES_USER: hive
       POSTGRES_PASSWORD: hive123
@@ -31,7 +31,8 @@ services:
       - ./mount/postgres/data:/var/lib/postgresql/data
   hive-metastore:
     container_name: hive-metastore
-    build: ./images/hive-metastore
+    # build: ./images/hive-metastore
+    image: mengkevin/hive:3.0.0
     ports:
       - 9083:9083
     depends_on:
@@ -41,10 +42,11 @@ services:
     restart: always
   spark-master:
     container_name: spark-master
-    build: ./images/spark
+    # build: ./images/spark
+    image: mengkevin/spark:3.5.1
     ports:
       - "5050:5050"
-      - "7077:7077"
+      - "7078:7077"
     depends_on:
       - postgres
     networks:
@@ -56,7 +58,8 @@ services:
     command: usr/local/spark/bin/spark-class org.apache.spark.deploy.master.Master --ip spark-master --port 7077 --webui-port 5050
   spark-worker-a:
     container_name: spark-worker-a
-    build: ./images/spark
+    # build: ./images/spark
+    image: mengkevin/spark:3.5.1
     depends_on:
       - spark-master
     networks:
@@ -70,7 +73,8 @@ services:
     command: usr/local/spark/bin/spark-class org.apache.spark.deploy.worker.Worker --webui-port 5051 spark://spark-master:7077
   spark-worker-b:
     container_name: spark-worker-b
-    build: ./images/spark
+    # build: ./images/spark
+    image: mengkevin/spark:3.5.1
     depends_on:
       - spark-master
     networks:
@@ -84,13 +88,14 @@ services:
     command: usr/local/spark/bin/spark-class org.apache.spark.deploy.worker.Worker --webui-port 5052 spark://spark-master:7077
   workspace:
     container_name: workspace
-    build: ./images/workspace
+    # build: ./images/workspace
+    image: mengkevin/jupyter-workspace:1.0
     depends_on:
       - spark-master
     networks:
       - my_network
     ports:
-      - "8888:8888"
+      - "8890:8888"
       - "4040:4040"
     volumes:
       - ./work:/usr/local/spark_dev/work
@@ -106,7 +111,7 @@ services:
     networks:
       - my_network
     ports:
-      - "8080:8080"
+      - "8085:8080"
     environment:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=password
